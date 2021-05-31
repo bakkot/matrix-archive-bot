@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "dependencies": {
+    "anchorme": "^2.1.2",
+    "crc-32": "^1.2.0",
+    "jsdom": "^16.6.0",
+    "matrix-js-sdk": "^11.1.0"
+  }
+}
