@@ -5,12 +5,12 @@ let path = require('path');
 let sdk = require('matrix-js-sdk');
 
 // token is under settings -> Help & About. yes, really.
-let token = fs.readFileSync(path.resolve(__dirname, 'token.txt'), 'utf8').trim();
+let { userId, accessToken } = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'credentials.json'), 'utf8'));
 
 let client = sdk.createClient({
   baseUrl: 'https://matrix.org',
-  accessToken: token,
-  userId: '@bakkot-logbot:matrix.org',
+  accessToken,
+  userId,
 });
 console.log(client.getAccessToken());
 

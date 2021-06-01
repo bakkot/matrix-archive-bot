@@ -205,6 +205,7 @@ function renderDay(rooms, room, day, events, prev, next) {
   </style>
   <script>
   let firstLoad = true;
+  let isMultiline = hash => /^L[0-9]+-L[0-9]+$/.test(hash);
   function highlightLinked() {
     for (let msg of document.querySelectorAll('.highlight')) {
       msg.classList.remove('highlight');
@@ -214,8 +215,8 @@ function renderDay(rooms, room, day, events, prev, next) {
     if (hash.startsWith('#')) {
       hash = hash.substring(1);
     }
-    if (hash.startsWith('l:')) {
-      let parts = hash.substring(2).split(',');
+    if (isMultiline(hash)) {
+      let parts = hash.split('-');
       if (parts.length !== 2) {
         return;
       }
@@ -259,18 +260,19 @@ function renderDay(rooms, room, day, events, prev, next) {
       let href = e.target.href;
 
       if (e.shiftKey && location.hash.length > 1) {
+        let hash = location.hash.substring(1);
         let firstHash;
-        if (location.hash.startsWith('#l:')) {
-          firstHash = location.hash.substring(3).split(',')[0];
+        if (isMultiline(hash)) {
+          firstHash = hash.split('-')[0];
         } else {
-          firstHash = location.hash.substring(1);
+          firstHash = hash
         }
         let secondHash = e.target.hash.substring(1);
         let first = document.getElementById(firstHash);
         let second = document.getElementById(secondHash);
         let tbody = document.getElementById('log-tbody');
         if (first?.classList.contains('msg') && second?.classList.contains('msg')) {
-          history.pushState({}, '', '#l:' + firstHash + ',' + secondHash);
+          history.pushState({}, '', '#' + firstHash + '-' + secondHash);
         }
       } else {
         if (href === location.href) {
@@ -311,7 +313,7 @@ function getNickClass(nick) {
 }
 
 function renderRoom(room, current) {
-  return `<li><a href="${current === 'index' ? '' : '../'}${sanitizeRoomName(room)}"${room === current ? ' class="current-room"' : ''}>${room}</a></li>`;
+  return `<li><a href="${current === 'index' ? '' : '../'}${sanitizeRoomName(room)}/"${room === current ? ' class="current-room"' : ''}>${room}</a></li>`;
 }
 
 function renderSidebar(rooms, room, day, prev, next) {
@@ -336,16 +338,17 @@ ${rooms.map(r => renderRoom(r, room)).join('\n')}
 `;
 }
 
-function renderEvent(event) {
+function renderEvent(event, index) {
   let { msgtype } = event.content;
   if (msgtype !== 'm.text' && msgtype !== 'm.emote') {
     throw new Error('unknown event message type ' + msgtype);
   }
+  let id = `L${index}`;
   let date = new Date(event.ts);
   let hours = ('' + date.getUTCHours()).padStart(2, '0');
   let minutes = ('' + date.getUTCMinutes()).padStart(2, '0');
   let full = date.toString();
-  let ts = `<a class="ts" href="#${event.id}" alt="${full}">${hours}:${minutes}</a>`;
+  let ts = `<a class="ts" href="#${id}" alt="${full}">${hours}:${minutes}</a>`;
   let { senderName } = event;
   let shortNameMatch = senderName.match(/(.*) \(@[^\):\s]+:[^\):\s]+\.[^\):\s]+\)$/);
   if (shortNameMatch != null) {
@@ -366,7 +369,7 @@ function renderEvent(event) {
       exclude: (s) => anchorme.validate.email(s) || s.startsWith('file:///'),
     },
   });
-  return `<tr class="msg" id="${event.id}"><td class="ts-cell">${ts}</td><td class="nick-cell">${name}</td><td class="msg-cell">${contents}</td></tr>`;
+  return `<tr class="msg" id="${id}"><td class="ts-cell">${ts}</td><td class="nick-cell">${name}</td><td class="msg-cell">${contents}</td></tr>`;
 }
 
 function escapeForHtml(str) {
