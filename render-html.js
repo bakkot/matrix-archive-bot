@@ -50,6 +50,13 @@ for (let room of rooms) {
   fs.writeFileSync(path.join(roomDir, 'index.html'), index, 'utf8');
 }
 
+if (rooms.length > 0) {
+  let indexDir = path.join('logs', 'docs');
+  fs.mkdirSync(indexDir, { recursive: true });
+  let index = renderDay(rooms, 'index', '', [], null, null);
+  fs.writeFileSync(path.join(indexDir, 'index.html'), index, 'utf8');
+}
+
 function sanitizeRoomName(room) {
   return room.replace(/ /g, '_');
 }
@@ -82,7 +89,7 @@ function postprocessHTML(html) {
 function renderDay(rooms, room, day, events, prev, next) {
   return `<!doctype html>
 <head>
-  <title>${room} on ${day}</title>
+  <title>${room === 'index' ? 'Channel Index' : `${room} on ${day}`}</title>
   <style>
   body {
     background-color: #fafafa;
@@ -286,7 +293,9 @@ ${
     ? `<table><tbody id="log-tbody">
   ${events.map(renderEvent).join('\n  ')}
 </tbody></table>`
-    : '[no messages to display for this date]'
+    : room === 'index'
+      ? '[see channel index on the left]'
+      : '[no messages to display for this date]'
 }
 </div></div></body>
 `;
@@ -302,18 +311,24 @@ function getNickClass(nick) {
 }
 
 function renderRoom(room, current) {
-  return `<li><a href="../${sanitizeRoomName(room)}"${room === current ? ' class="current-room"' : ''}>${room}</a></li>`;
+  return `<li><a href="${current === 'index' ? '' : '../'}${sanitizeRoomName(room)}"${room === current ? ' class="current-room"' : ''}>${room}</a></li>`;
 }
 
 function renderSidebar(rooms, room, day, prev, next) {
-  let prevInner = `<span>prev</span>`;
-  let nextInner = `<span style="float:right">next</span>`;
-  return `
+  let header;
+  if (room === 'index') {
+    header = `<div class="title">Channel Index</div>`;
+  } else {
+    let prevInner = `<span>prev</span>`;
+    let nextInner = `<span style="float:right">next</span>`;
+    header = `
 <div class="title">${room}<br>${day}</div>
-${prev == null ? prevInner : `<a href="${prev}" class="nav">${prevInner}</a>`} ${
-    next == null ? nextInner : `<a href="${next}" class="nav">${nextInner}</a>`
+${prev == null ? prevInner : `<a href="${prev}" class="nav">${prevInner}</a>`}
+${next == null ? nextInner : `<a href="${next}" class="nav">${nextInner}</a>`}
+    `;
   }
 
+return `${header}
 <ul class="room-list">
 ${rooms.map(r => renderRoom(r, room)).join('\n')}
 </ul>
