@@ -11,7 +11,8 @@ let root = path.join('logs', 'json');
 
 let rooms = fs.readdirSync(root);
 for (let room of rooms) {
-  fs.mkdirSync(path.join('logs', 'docs', room), { recursive: true });
+  let roomDir = path.join('logs', 'docs', room.replace(/ /g, '_'));
+  fs.mkdirSync(roomDir, { recursive: true });
   let days = fs
     .readdirSync(path.join(root, room))
     .filter((f) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(f))
@@ -19,7 +20,7 @@ for (let room of rooms) {
     .sort()
     .reverse();
   let alreadyDoneHtml = fs
-    .readdirSync(path.join('logs', 'docs', room))
+    .readdirSync(roomDir)
     .filter((f) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.html$/.test(f))
     .map((d) => d.replace(/\.html$/, ''))
     .sort()
@@ -37,19 +38,17 @@ for (let room of rooms) {
     let prev = i < days.length - 1 ? days[i + 1] : null;
     let next = i > 0 ? days[i - 1] : null;
     let rendered = postprocessHTML(renderDay(room, day, events, prev, next));
-    fs.writeFileSync(path.join('logs', 'docs', room, day + '.html'), rendered, 'utf8');
+    fs.writeFileSync(path.join(roomDir, day + '.html'), rendered, 'utf8');
   }
 
   if (days.length === 0) {
     return;
   }
   let index = `<!doctype html>
-<meta http-equiv="refresh" content="0; URL='${days[0]}.html'" />
+<meta http-equiv="refresh" content="0; URL='${days[0]}'" />
 `;
-  fs.writeFileSync(path.join('logs', 'docs', room, 'index.html'), index, 'utf8');
+  fs.writeFileSync(path.join(roomDir, 'index.html'), index, 'utf8');
 }
-
-// TODO highlight linked cell
 
 function postprocessHTML(html) {
   // this is kind of slow, but extremely convenient
@@ -280,8 +279,8 @@ function renderSidebar(room, day, prev, next) {
   let nextInner = `<span style="float:right">next</span>`;
   return `
 <div class="title">${room}<br>${day}</div>
-${prev == null ? prevInner : `<a href="${prev}.html" class="nav">${prevInner}</a>`} ${
-    next == null ? nextInner : `<a href="${next}.html" class="nav">${nextInner}</a>`
+${prev == null ? prevInner : `<a href="${prev}" class="nav">${prevInner}</a>`} ${
+    next == null ? nextInner : `<a href="${next}" class="nav">${nextInner}</a>`
   }
 <div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
 `;
