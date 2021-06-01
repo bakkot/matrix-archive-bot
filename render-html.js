@@ -9,9 +9,9 @@ let anchorme = require('anchorme').default;
 
 let root = path.join('logs', 'json');
 
-let rooms = fs.readdirSync(root);
+let rooms = fs.readdirSync(root).sort();
 for (let room of rooms) {
-  let roomDir = path.join('logs', 'docs', room.replace(/ /g, '_'));
+  let roomDir = path.join('logs', 'docs', sanitizeRoomName(room));
   fs.mkdirSync(roomDir, { recursive: true });
   let days = fs
     .readdirSync(path.join(root, room))
@@ -37,7 +37,7 @@ for (let room of rooms) {
     let events = JSON.parse(fs.readFileSync(path.join(root, room, day + '.json'), 'utf8'));
     let prev = i < days.length - 1 ? days[i + 1] : null;
     let next = i > 0 ? days[i - 1] : null;
-    let rendered = postprocessHTML(renderDay(room, day, events, prev, next));
+    let rendered = postprocessHTML(renderDay(rooms, room, day, events, prev, next));
     fs.writeFileSync(path.join(roomDir, day + '.html'), rendered, 'utf8');
   }
 
@@ -48,6 +48,10 @@ for (let room of rooms) {
 <meta http-equiv="refresh" content="0; URL='${days[0]}'" />
 `;
   fs.writeFileSync(path.join(roomDir, 'index.html'), index, 'utf8');
+}
+
+function sanitizeRoomName(room) {
+  return room.replace(/ /g, '_');
 }
 
 function postprocessHTML(html) {
@@ -75,7 +79,7 @@ function postprocessHTML(html) {
   return dom.serialize();
 }
 
-function renderDay(room, day, events, prev, next) {
+function renderDay(rooms, room, day, events, prev, next) {
   return `<!doctype html>
 <head>
   <title>${room} on ${day}</title>
@@ -97,6 +101,29 @@ function renderDay(room, day, events, prev, next) {
   }
   .title {
     text-align: center;
+  }
+  .room-list {
+    border-top: 1px solid #444;
+    padding-top: 2em;
+    padding-left: .1em;
+    margin-top: 1em;
+    list-style: none;
+    margin: 0px;
+  }
+  .room-list > li {
+    margin-top: .2em;
+  }
+  .room-list a {
+    color: #777;
+    text-decoration: none;
+  }
+  .room-list a:hover {
+    text-decoration: underline;
+  }
+  .current-room {
+    padding-left: .5em;
+    color: black !important;
+    text-decoration: none;
   }
   .footer {
     position: absolute;
@@ -252,7 +279,7 @@ function renderDay(room, day, events, prev, next) {
   </script>
 </head>
 <body><div class="wrapper">
-<div class="sidebar">${renderSidebar(room, day, prev, next)}</div>
+<div class="sidebar">${renderSidebar(rooms, room, day, prev, next)}</div>
 <div class="log">
 ${
   events.length > 0
@@ -274,7 +301,11 @@ function getNickClass(nick) {
   return `nick-${nickClass}`;
 }
 
-function renderSidebar(room, day, prev, next) {
+function renderRoom(room, current) {
+  return `<li><a href="../${sanitizeRoomName(room)}"${room === current ? ' class="current-room"' : ''}>${room}</a></li>`;
+}
+
+function renderSidebar(rooms, room, day, prev, next) {
   let prevInner = `<span>prev</span>`;
   let nextInner = `<span style="float:right">next</span>`;
   return `
@@ -282,6 +313,10 @@ function renderSidebar(room, day, prev, next) {
 ${prev == null ? prevInner : `<a href="${prev}" class="nav">${prevInner}</a>`} ${
     next == null ? nextInner : `<a href="${next}" class="nav">${nextInner}</a>`
   }
+
+<ul class="room-list">
+${rooms.map(r => renderRoom(r, room)).join('\n')}
+</ul>
 <div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
 `;
 }
