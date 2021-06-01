@@ -89,7 +89,7 @@ function postprocessHTML(html) {
 function renderDay(rooms, room, day, events, prev, next) {
   return `<!doctype html>
 <head>
-  <title>${room === 'index' ? 'Channel Index' : `${room} on ${day}`}</title>
+  <title>${room === 'index' ? 'Matrix Logs' : `${room} on ${day}`}</title>
   <style>
   body {
     background-color: #fafafa;

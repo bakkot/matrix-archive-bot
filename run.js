@@ -12,7 +12,6 @@ let client = sdk.createClient({
   accessToken,
   userId,
 });
-console.log(client.getAccessToken());
 
 client.startClient();
 client.once('sync', (state, prevState, res) => {
