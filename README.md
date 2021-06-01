@@ -2,6 +2,8 @@
 
 A bot to log matrix channels and render them as nice HTML.
 
+Currently does not follow channels; you will need to re-run it whenever you want to refresh the logs. It will make an effort to avoid doing unnecessary work on subsequent runs.
+
 ## Setup
 
 You'll need a Matrix account.
