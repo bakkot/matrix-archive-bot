@@ -11,7 +11,7 @@ let root = path.join('logs', 'json');
 
 let rooms = fs.readdirSync(root);
 for (let room of rooms) {
-  fs.mkdirSync(path.join('logs', 'html', room), { recursive: true });
+  fs.mkdirSync(path.join('logs', 'docs', room), { recursive: true });
   let days = fs
     .readdirSync(path.join(root, room))
     .filter((f) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(f))
@@ -19,7 +19,7 @@ for (let room of rooms) {
     .sort()
     .reverse();
   let alreadyDoneHtml = fs
-    .readdirSync(path.join('logs', 'html', room))
+    .readdirSync(path.join('logs', 'docs', room))
     .filter((f) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.html$/.test(f))
     .map((d) => d.replace(/\.html$/, ''))
     .sort()
@@ -37,7 +37,7 @@ for (let room of rooms) {
     let prev = i < days.length - 1 ? days[i + 1] : null;
     let next = i > 0 ? days[i - 1] : null;
     let rendered = postprocessHTML(renderDay(room, day, events, prev, next));
-    fs.writeFileSync(path.join('logs', 'html', room, day + '.html'), rendered, 'utf8');
+    fs.writeFileSync(path.join('logs', 'docs', room, day + '.html'), rendered, 'utf8');
   }
 
   if (days.length === 0) {
@@ -46,7 +46,7 @@ for (let room of rooms) {
   let index = `<!doctype html>
 <meta http-equiv="refresh" content="0; URL='${days[0]}.html'" />
 `;
-  fs.writeFileSync(path.join('logs', 'html', room, 'index.html'), index, 'utf8');
+  fs.writeFileSync(path.join('logs', 'docs', room, 'index.html'), index, 'utf8');
 }
 
 // TODO highlight linked cell
