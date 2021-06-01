@@ -283,7 +283,7 @@ function renderSidebar(room, day, prev, next) {
 ${prev == null ? prevInner : `<a href="${prev}.html" class="nav">${prevInner}</a>`} ${
     next == null ? nextInner : `<a href="${next}.html" class="nav">${nextInner}</a>`
   }
-<div class="footer"><a href="TODO">source on github</a></div>
+<div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
 `;
 }
 
