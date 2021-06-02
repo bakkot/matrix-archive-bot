@@ -65,16 +65,16 @@ function makeIndex(room, roomDir) {
   return `<!doctype html>
 <head>
   <title>Logs for ${room}</title>
+  <style>
+  body {
+    background-color: #fafafa;
+    padding: 1.5em;
+  }
+  ul {
+    line-height: 1.5;
+  }
+  </style>
 </head>
-<style>
-body {
-  background-color: #fafafa;
-  padding: 1.5em;
-}
-ul {
-  line-height: 1.5;
-}
-</style>
 <body>
   Logs for ${room}:
   <ul>
