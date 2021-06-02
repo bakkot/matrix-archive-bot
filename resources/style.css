@@ -6,7 +6,6 @@ body {
   position: absolute;
   top: 5px;
   bottom: 10px;
-  width: 100%;
 }
 .sidebar {
   flex: 0 0 165px;
@@ -15,6 +14,7 @@ body {
 }
 .title {
   text-align: center;
+  margin-bottom: .2em;
 }
 .room-list {
   border-top: 1px solid #444;
@@ -43,9 +43,23 @@ body {
   position: absolute;
   bottom: 0px;
 }
-.nav > span {
+.nav {
+  margin-bottom: .1em;
+}
+.nav-link > span {
   /* text-decoration gets dropped from floating elements */
   text-decoration: underline;
+}
+.rhs {
+  display: flex;
+  flex-direction: column;
+}
+.rhs-header {
+  border-bottom: 1px solid #444;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding-bottom: .2em;
+  text-align: right;
 }
 .log {
   overflow-y: auto;

@@ -1,5 +1,9 @@
 {
   "private": true,
+  "scripts": {
+    "collect": "node run.js",
+    "render": "node render-txt.js && node render-html.js"
+  },
   "dependencies": {
     "anchorme": "^2.1.2",
     "crc-32": "^1.2.0",

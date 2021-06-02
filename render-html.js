@@ -104,7 +104,7 @@ function renderDay(rooms, room, day, events, prev, next) {
 </head>
 <body><div class="wrapper">
 <div class="sidebar">${renderSidebar(rooms, room, day, prev, next)}</div>
-<div class="log">
+<div class="rhs"><div class="log">
 ${
   events.length > 0
     ? `<table><tbody id="log-tbody">
@@ -114,7 +114,7 @@ ${
       ? '[see channel index on the left]'
       : '[no messages to display for this date]'
 }
-</div></div></body>
+</div></div></div></body>
 `;
 }
 
@@ -139,9 +139,11 @@ function renderSidebar(rooms, room, day, prev, next) {
     let prevInner = `<span>prev</span>`;
     let nextInner = `<span style="float:right">next</span>`;
     header = `
-<div class="title">${room}<br>${day}</div>
-${prev == null ? prevInner : `<a href="${prev}" class="nav">${prevInner}</a>`}
-${next == null ? nextInner : `<a href="${next}" class="nav">${nextInner}</a>`}
+<div class="title">${room}<br>${day}<br><a href="plaintext/">plaintext logs</a></div>
+<div class="nav">
+${prev == null ? prevInner : `<a href="${prev}" class="nav-link">${prevInner}</a>`}
+${next == null ? nextInner : `<a href="${next}" class="nav-link">${nextInner}</a>`}
+</div>
     `;
   }
 
