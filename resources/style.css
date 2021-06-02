@@ -6,6 +6,8 @@ body {
   position: absolute;
   top: 5px;
   bottom: 10px;
+  left: 10px;
+  right: 10px;
 }
 .sidebar {
   flex: 0 0 165px;
@@ -53,7 +55,6 @@ body {
 .rhs {
   display: flex;
   flex-direction: column;
-  min-width: 20em;
 }
 .rhs-header {
   border-bottom: 1px solid #444;
