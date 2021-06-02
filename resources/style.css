@@ -53,6 +53,7 @@ body {
 .rhs {
   display: flex;
   flex-direction: column;
+  min-width: 20em;
 }
 .rhs-header {
   border-bottom: 1px solid #444;
