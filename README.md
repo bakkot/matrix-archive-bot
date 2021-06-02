@@ -16,9 +16,9 @@ Create a file in this directory named `credentials.json` which has JSON with you
 
 `npm install` to install dependencies. Then:
 
-`node run.js` will then download the complete history for every channel you're in, as JSON. Re-running it will only fetch new messages, so it's safe to run repeatedly.
+`npm run collect` will then download the complete history for every channel you're in, as JSON. Re-running it will only fetch new messages, so it's safe to run repeatedly.
 
-`node render-html.js` will generate HTML files from any existing JSON logs and put them in the `docs` directory, suitable for use with Github Pages. This does not hit the network.
+`npm run render` will generate HTML files from any existing JSON logs and put them in the `docs` directory, suitable for use with Github Pages. This does not hit the network.
 
 ## Regenerating rendered HTML
 
