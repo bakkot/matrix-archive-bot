@@ -5,7 +5,7 @@ let path = require('path');
 
 let crc = require('crc-32');
 let { JSDOM } = require('jsdom');
-let anchorme = require('anchorme').default;
+let linkify = require('linkifyjs/html');
 
 let root = path.join('logs', 'json');
 
@@ -180,10 +180,11 @@ function renderEvent(event, index) {
       ? event.content.formatted_body
       : escapeForHtml(event.content.body);
 
-  contents = anchorme({
-    input: contents,
-    options: {
-      exclude: (s) => anchorme.validate.email(s) || s.startsWith('file:///'),
+  contents = linkify(contents, {
+    className: '',
+    ignoreTags: ['pre'],
+    validate: {
+      email: false,
     },
   });
   return `<tr class="msg" id="${id}"><td class="ts-cell">${ts}</td><td class="nick-cell">${name}</td><td class="msg-cell">${contents}</td></tr>`;
