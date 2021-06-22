@@ -24,7 +24,7 @@ for (let line of lines) {
   if (line.trim() === '') {
     continue;
   }
-  let match = line.match(/^(?<ts>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}) (?<channelName>#[A-Za-z0-9#-_]+) (?<uname>(<[^>]+>)|(\* [^ ]+)) (?<message>.*)/);
+  let match = line.match(/^(?<ts>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}) (?<channelName>#[A-Za-z0-9#-_]+) (?<uname>(<[^>]+>)|(-[^-]+-)|(\* [^ ]+)) (?<message>.*)/);
   if (match == null) {
     console.error(`could not parse line`);
     console.error(line);
@@ -33,7 +33,7 @@ for (let line of lines) {
   let { ts: tsString, channelName, uname, message } = match.groups;
 
   if (currentChannelName == null) {
-    if (fs.existsSync(path.join('logs', 'json', channelName.replace(/#/g, '')))) {
+    if (fs.existsSync(path.join('logs', 'json', 'irc-' + channelName.replace(/#/g, '')))) {
       throw new Error('channel name already exists in non-historical logs');
     }
     logDir = path.join('logs', 'historical-json', channelName);
@@ -56,8 +56,9 @@ for (let line of lines) {
     currentEntries = [];
   }
   let isSlashMe = uname.startsWith('*');
+  let isIrcNotice = uname.startsWith('-');
   let justUname = isSlashMe ? uname.substring(2) : uname.slice(1, -1);
-  currentEntries.push({
+  let entry = {
     content: {
       body: message,
       msgtype: isSlashMe ? 'm.emote' : 'm.text'
@@ -65,7 +66,11 @@ for (let line of lines) {
     ts,
     senderName: justUname,
     senderId: `${justUname}@irc`,
-  });
+  };
+  if (isIrcNotice) {
+    entry.content.isIrcNotice = true;
+  }
+  currentEntries.push(entry);
 }
 writeCurrentBatch();
 

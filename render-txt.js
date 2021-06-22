@@ -90,5 +90,8 @@ function makeIndex(room, roomDir) {
 }
 
 function sanitizeRoomName(room) {
+  if (room.startsWith('#')) {
+    room = 'irc-' + room;
+  }
   return room.replace(/ /g, '_').replace(/#/g, '');
 }

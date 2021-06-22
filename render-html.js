@@ -46,7 +46,11 @@ for (let { room, historical } of rooms) {
     let events = JSON.parse(fs.readFileSync(path.join(roomJsonDir, day + '.json'), 'utf8'));
     let prev = i < days.length - 1 ? days[i + 1] : null;
     let next = i > 0 ? days[i - 1] : null;
-    let rendered = postprocessHTML(renderDay(rooms, room, day, events, prev, next));
+    let rendered = renderDay(rooms, room, day, events, prev, next);
+    if (!room.startsWith('#')) {
+      // don't postprocess IRC logs
+      rendered = postprocessHTML(rendered);
+    }
     fs.writeFileSync(path.join(roomDir, day + '.html'), rendered, 'utf8');
   }
 
@@ -72,6 +76,9 @@ if (rooms.length > 0) {
 }
 
 function sanitizeRoomName(room) {
+  if (room.startsWith('#')) {
+    room = 'irc-' + room;
+  }
   return room.replace(/ /g, '_').replace(/#/g, '');
 }
 
@@ -97,7 +104,9 @@ function postprocessHTML(html) {
     s.className = getNickClass(uname);
     link.replaceWith(s);
   }
-  return dom.serialize();
+  let result = dom.serialize();
+  dom.window.close(); // attempt to reclaim memory from jsdom
+  return result;
 }
 
 function renderDay(rooms, room, day, events, prev, next) {
