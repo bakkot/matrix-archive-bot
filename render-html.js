@@ -8,13 +8,18 @@ let { JSDOM } = require('jsdom');
 let linkify = require('linkifyjs/html');
 
 let root = path.join('logs', 'json');
+let historicalRoot = path.join('logs', 'historical-json');
 
-let rooms = fs.readdirSync(root).sort();
-for (let room of rooms) {
+let rooms = [
+  ...fs.readdirSync(root).sort().map(room => ({ historical: false, room })),
+  ...fs.existsSync(historicalRoot) ? fs.readdirSync(historicalRoot).sort().map(room => ({ historical: true, room })) : [],
+];
+for (let { room, historical } of rooms) {
   let roomDir = path.join('logs', 'docs', sanitizeRoomName(room));
   fs.mkdirSync(roomDir, { recursive: true });
+  let roomJsonDir = path.join(historical ? historicalRoot : root, room);
   let days = fs
-    .readdirSync(path.join(root, room))
+    .readdirSync(roomJsonDir)
     .filter((f) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(f))
     .map((d) => d.replace(/\.json$/, ''))
     .sort()
@@ -22,10 +27,14 @@ for (let room of rooms) {
   let alreadyDoneHtml = fs
     .readdirSync(roomDir)
     .filter((f) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.html$/.test(f))
-    .map((d) => d.replace(/\.html$/, ''))
-    .sort()
-    .reverse()
-    .slice(2); // always do at least the last two days
+    .map((d) => d.replace(/\.html$/, ''));
+
+  if (!historical) {
+    alreadyDoneHtml = alreadyDoneHtml
+      .sort()
+      .reverse()
+      .slice(2); // always do at least the last two days
+  }
 
   let alreadyDone = new Set(alreadyDoneHtml);
 
@@ -34,7 +43,7 @@ for (let room of rooms) {
     if (alreadyDone.has(day)) {
       continue;
     }
-    let events = JSON.parse(fs.readFileSync(path.join(root, room, day + '.json'), 'utf8'));
+    let events = JSON.parse(fs.readFileSync(path.join(roomJsonDir, day + '.json'), 'utf8'));
     let prev = i < days.length - 1 ? days[i + 1] : null;
     let next = i > 0 ? days[i - 1] : null;
     let rendered = postprocessHTML(renderDay(rooms, room, day, events, prev, next));
@@ -63,7 +72,7 @@ if (rooms.length > 0) {
 }
 
 function sanitizeRoomName(room) {
-  return room.replace(/ /g, '_');
+  return room.replace(/ /g, '_').replace(/#/g, '');
 }
 
 function postprocessHTML(html) {
@@ -147,12 +156,33 @@ ${next == null ? nextInner : `<a href="${next}" class="nav-link">${nextInner}</a
     `;
   }
 
-return `${header}
+  // someday, partition
+  let historicalRooms = rooms.filter(r => r.historical).map(r => r.room);
+  let activeRooms = rooms.filter(r => !r.historical).map(r => r.room);
+
+  if (historicalRooms.length === 0) {
+    return `${header}
 <ul class="room-list">
-${rooms.map(r => renderRoom(r, room)).join('\n')}
+${activeRooms.map(r => renderRoom(r, room)).join('\n')}
 </ul>
 <div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
 `;
+  } else {
+    return `${header}
+<div class="room-list-wrapper">Active:<br>
+<ul class="room-list">
+${activeRooms.map(r => renderRoom(r, room)).join('\n')}
+</ul>
+</div>
+<br>
+<div class="room-list-wrapper">Historical:<br>
+<ul class="room-list">
+${historicalRooms.map(r => renderRoom(r, room)).join('\n')}
+</ul>
+</div>
+<div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
+`;
+  }
 }
 
 function renderEvent(event, index) {

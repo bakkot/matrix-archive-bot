@@ -4,13 +4,18 @@ let fs = require('fs');
 let path = require('path');
 
 let root = path.join('logs', 'json');
+let historicalRoot = path.join('logs', 'historical-json');
 
-let rooms = fs.readdirSync(root).sort();
-for (let room of rooms) {
+let rooms = [
+  ...fs.readdirSync(root).sort().map(room => ({ historical: false, room })),
+  ...fs.existsSync(historicalRoot) ? fs.readdirSync(historicalRoot).sort().map(room => ({ historical: true, room })) : [],
+];
+for (let { room, historical } of rooms) {
   let roomDir = path.join('logs', 'docs', sanitizeRoomName(room), 'plaintext');
   fs.mkdirSync(roomDir, { recursive: true });
+  let roomJsonDir = path.join(historical ? historicalRoot : root, room);
   let days = fs
-    .readdirSync(path.join(root, room))
+    .readdirSync(roomJsonDir)
     .filter(f => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(f))
     .map(d => d.replace(/\.json$/, ''))
     .sort();
@@ -34,7 +39,7 @@ for (let room of rooms) {
     let contents = [];
     for (let day of days) {
       contents.push(`${contents.length === 0 ? '' : '\n'}${day}\n`);
-      let events = JSON.parse(fs.readFileSync(path.join(root, room, day + '.json'), 'utf8'));
+      let events = JSON.parse(fs.readFileSync(path.join(roomJsonDir, day + '.json'), 'utf8'));
       for (let event of events) {
         let { msgtype } = event.content;
         if (msgtype !== 'm.text' && msgtype !== 'm.emote') {
@@ -85,5 +90,5 @@ function makeIndex(room, roomDir) {
 }
 
 function sanitizeRoomName(room) {
-  return room.replace(/ /g, '_');
+  return room.replace(/ /g, '_').replace(/#/g, '');
 }

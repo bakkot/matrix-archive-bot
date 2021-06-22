@@ -18,11 +18,16 @@ body {
   text-align: center;
   margin-bottom: .2em;
 }
+.room-list-wrapper {
+  color: #777;
+}
+.room-list-wrapper > .room-list {
+  padding-left: .6em;
+  list-style: none;
+  margin: 0px;
+}
 .room-list {
-  border-top: 1px solid #444;
-  padding-top: 2em;
   padding-left: .1em;
-  margin-top: 1em;
   list-style: none;
   margin: 0px;
 }
@@ -46,7 +51,9 @@ body {
   bottom: 0px;
 }
 .nav {
-  margin-bottom: .1em;
+  margin-bottom: 2em;
+  border-bottom: 1px solid #444;
+  padding-bottom: .1em;
 }
 .nav-link > span {
   /* text-decoration gets dropped from floating elements */
