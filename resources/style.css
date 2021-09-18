@@ -115,7 +115,7 @@ p {
   text-align: right;
   vertical-align:top;
   width: 13ex;
-  overflow: scroll;
+  /*overflow: scroll;*/
 }
 .msg-cell {
   padding-left: .3em;
@@ -123,7 +123,8 @@ p {
 /* firefox does not like overflow-scroll on td, so we need wrappers */
 .m-ov {
   width: 100%;
-  overflow-x: scroll;
+  overflow-x: hidden;
+  /*overflow-x: scroll;*/
 }
 .highlight {
   background-color: #fffbdd;
