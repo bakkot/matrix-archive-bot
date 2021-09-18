@@ -1,0 +1,95 @@
+'use strict';
+
+
+let fs = require('fs');
+let path = require('path');
+let { execFileSync } = require('child_process');
+
+let sqlite3 = require('sqlite3');
+let { open } = require('sqlite');
+
+let { root, historicalRoot, rooms, sanitizeRoomName } = require('./utils.js');
+
+(async () => {
+  for (let { room, historical } of rooms) {
+    let jsonDir = path.join(historical ? historicalRoot : root, room);
+    let sanitized = sanitizeRoomName(room);
+    let dbFile = path.join(__dirname, 'sql', sanitized + '.sqlite3');
+    let lastAddedFile = path.join(__dirname, 'sql', sanitized + '-last-added.json');
+    if (!fs.existsSync(dbFile)) {
+      continue;
+    }
+    if (!fs.existsSync(lastAddedFile)) {
+      throw new Error(`expected to find ${lastAddedFile}`);
+    }
+
+    let indexDir = path.join(__dirname, 'logs', 'docs', '_indexes', sanitized);
+
+    // // add everything more recent than the last-added item
+    let last = JSON.parse(fs.readFileSync(lastAddedFile, 'utf8'));
+    let toAdd = fs.readdirSync(jsonDir).sort().filter(f => f.endsWith('.json') && f >= last.file);
+    let parts = [];
+    let finalName;
+    let finalLines;
+    for (let file of toAdd) {
+      let lines = JSON.parse(fs.readFileSync(path.join(jsonDir, file), 'utf8'));
+      finalName = file;
+      finalLines = lines;
+      if (file === last.file) {
+        if (last.ids != null) {
+          let seen = new Set(last.ids);
+          lines = lines.filter(l => !seen.has(l.id));
+        } else {
+          lines = lines.filter(l => l.ts > last.ts);
+        }
+      }
+      for (let [idx, line] of lines.entries()) {
+        let { senderName, ts, content } = line;
+        parts.push({ senderName, ts, idx, content });
+      }
+    }
+    if (parts.length === 0) {
+      if (!fs.existsSync(indexDir)) {
+        execFileSync(path.join(__dirname, 'scripts', 'split-db.sh'), [dbFile, indexDir]);
+      }
+      continue;
+    }
+
+    // TODO split this up if there's too many placeholders for sqlite
+    // unfortunately I don't know how many that is
+    let statement = `insert into search values ${parts.map((v, i) => `($sender${i}, $ts${i}, $idx${i}, $content${i})`).join(', ')}`;
+    let vals = Object.fromEntries(
+      parts.flatMap(({ senderName, ts, idx, content}, i) => [
+        [`$sender${i}`, senderName],
+        [`$ts${i}`, ts],
+        [`$idx${i}`, idx],
+        [`$content${i}`, content.body],
+      ])
+    );
+
+    const db = await open({
+      filename: dbFile,
+      driver: sqlite3.Database,
+    });
+    await db.run(statement, vals);
+    await db.close();
+
+    execFileSync(path.join(__dirname, 'scripts', 'split-db.sh'), [dbFile, indexDir]);
+
+    let lastAddedContents = { file: finalName };
+    if (finalLines.length === 0) {
+      lastAddedContents.ids = [];
+    } else if (finalLines[0].id != null) {
+      lastAddedContents.ids = finalLines.map(l => l.id);
+    } else {
+      // if we don't have a unique ID, fall back to timestamp
+      lastAddedContents.ts = finalLines[finalLines.length - 1].ts;
+    }
+    fs.writeFileSync(lastAddedFile, JSON.stringify(lastAddedContents), 'utf8');
+  }
+})().catch(e => {
+  console.error(e);
+  process.exit(1);
+});
+
+

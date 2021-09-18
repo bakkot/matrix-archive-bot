@@ -3,13 +3,8 @@
 let fs = require('fs');
 let path = require('path');
 
-let root = path.join('logs', 'json');
-let historicalRoot = path.join('logs', 'historical-json');
+let { root, historicalRoot, rooms, sanitizeRoomName } = require('./utils.js');
 
-let rooms = [
-  ...fs.readdirSync(root).sort().map(room => ({ historical: false, room })),
-  ...fs.existsSync(historicalRoot) ? fs.readdirSync(historicalRoot).sort().map(room => ({ historical: true, room })) : [],
-];
 for (let { room, historical } of rooms) {
   let roomDir = path.join('logs', 'docs', sanitizeRoomName(room), 'plaintext');
   fs.mkdirSync(roomDir, { recursive: true });
@@ -87,11 +82,4 @@ function makeIndex(room, roomDir) {
   </ul>
 </body>
 `;
-}
-
-function sanitizeRoomName(room) {
-  if (room.startsWith('#')) {
-    room = 'irc-' + room;
-  }
-  return room.replace(/ /g, '_').replace(/#/g, '');
 }

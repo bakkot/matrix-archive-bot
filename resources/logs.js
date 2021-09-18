@@ -81,3 +81,24 @@ addEventListener('click', e => {
     highlightLinked();
   }
 });
+
+addEventListener('DOMContentLoaded', () => {
+  let query = document.querySelector('#query');
+  let searchButton = document.querySelector('#search-submit');
+  if (query == null || searchButton == null) {
+    return;
+  }
+
+  searchButton.addEventListener('click', search);
+
+  query.addEventListener('keyup', e => {
+    if (e.keyCode === 13) {
+      search();
+    }
+  });
+
+  function search() {
+    let suffix = query.value.trim() == '' ? '' : `?q=${query.value.trim()}`;
+    location = `./search${suffix}`;
+  }
+});
