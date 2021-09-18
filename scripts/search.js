@@ -21,7 +21,7 @@ async function load(configUrl) {
     ],
     workerUrl.toString(),
     wasmUrl.toString(),
-    1024 * 256,
+    1024 * 512,
   );
   window.sqlWorker = worker;
 
@@ -109,8 +109,8 @@ async function load(configUrl) {
     } catch (e) {
       console.error('query failed', e);
       let { message } = e;
-      if (message.includes('disk I/O error')) {
-        message = 'request is taking too long';
+      if (message.includes('request limit reached')) {
+        message = 'too many requests, try again?';
       } else {
         message = 'error: ' + message;
       }
