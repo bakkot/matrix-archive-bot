@@ -243,7 +243,7 @@ function renderEvent(event, index) {
       email: false,
     },
   });
-  return `<tr class="msg" id="${id}"><td class="ts-cell">${ts}</td><td class="nick-cell">${name}</td><td class="msg-cell">${contents}</td></tr>`;
+  return `<tr class="msg" id="${id}"><td class="ts-cell">${ts}</td><td class="nick-cell"><div class="m-ov">${name}</div></td><td class="msg-cell">${contents}</td></tr>`;
 }
 
 function escapeForHtml(str) {

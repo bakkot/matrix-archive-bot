@@ -120,6 +120,11 @@ p {
 .msg-cell {
   padding-left: .3em;
 }
+/* firefox does not like overflow-scroll on td, so we need wrappers */
+.m-ov {
+  width: 100%;
+  overflow-x: scroll;
+}
 .highlight {
   background-color: #fffbdd;
 }

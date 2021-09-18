@@ -155,7 +155,7 @@ function renderEvent({ sender: senderName, ts, idx, content }) {
   // todo handle /me
   let name = `&lt;<span class="nick ${getNickClass(senderName)}">${escapeForHtml(senderName)}</span>&gt;`;
   let paras = content.split(/[\n\r]+/);
-  return `<tr class="msg"><td class="ts-cell">${tsHtml}</td><td class="nick-cell">${name}</td><td class="msg-cell">${paras.map(escapeForHtml).join('<br>')}</td></tr>`;
+  return `<tr class="msg"><td class="ts-cell">${tsHtml}</td><td class="nick-cell"><div class="m-ov">${name}</div></td><td class="msg-cell">${paras.map(escapeForHtml).join('<br>')}</td></tr>`;
 }
 
 function getNickClass(nick) {
