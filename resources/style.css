@@ -126,6 +126,12 @@ p {
   overflow-x: hidden;
   /*overflow-x: scroll;*/
 }
+.m-ov:hover {
+  display: inline;
+  position: relative;
+  background-color: #fafafa;
+  overflow-x: visible;
+}
 .highlight {
   background-color: #fffbdd;
 }
