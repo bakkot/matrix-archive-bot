@@ -45,6 +45,7 @@ for (let { room, historical } of rooms) {
     let events = JSON.parse(fs.readFileSync(path.join(roomJsonDir, day + '.json'), 'utf8'));
     let prev = i < days.length - 1 ? days[i + 1] : null;
     let next = i > 0 ? days[i - 1] : null;
+    events = applyModifications(events);
     let rendered = renderDay(rooms, room, day, events, prev, next, hasSearch);
     if (!room.startsWith('#')) {
       // don't postprocess IRC logs
@@ -73,6 +74,28 @@ if (rooms.length > 0) {
 
   let resourcesDir = path.join(__dirname, 'resources');
   cpr(resourcesDir, indexDir);
+}
+
+
+function isReplace(event) {
+  return event.content?.['m.relates_to']?.rel_type === 'm.replace';
+}
+
+function applyModifications(events) {
+  let replacing = events.map((v, i) => [v, i]).filter(p => isReplace(p[0]));
+  if (replacing.length === 0) {
+    return events;
+  }
+  let clone = [...events];
+  let ids = new Map(events.map((e, i) => [e.id, i]));
+  for (let [replacer, replacerIndex] of replacing) {
+    let targetIndex = ids.get(replacer.content['m.relates_to'].event_id);
+    if (targetIndex != null) {
+      clone[targetIndex].content = replacer.content['m.new_content'];
+      clone[replacerIndex] = null;
+    }
+  }
+  return clone.filter(e => e != null);
 }
 
 function cpr(inDir, outDir) {
