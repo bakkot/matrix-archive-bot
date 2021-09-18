@@ -11,13 +11,7 @@ let { execFileSync } = require('child_process');
 let sqlite3 = require('sqlite3');
 let { open } = require('sqlite');
 
-let root = path.join(__dirname, '..', 'logs', 'json');
-let historicalRoot = path.join(__dirname, '..', 'logs', 'historical-json');
-
-let rooms = [
-  ...fs.readdirSync(root).sort().map(room => ({ historical: false, room })),
-  ...fs.existsSync(historicalRoot) ? fs.readdirSync(historicalRoot).sort().map(room => ({ historical: true, room })) : [],
-];
+let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('../utils.js');
 
 (async () => {
   for (let { room, historical } of rooms) {
@@ -63,6 +57,7 @@ async function makeDb(jsonDir, outFile) {
     let parts = [];
     let lines = JSON.parse(fs.readFileSync(path.join(jsonDir, file), 'utf8'));
     finalLines = lines;
+    lines = applyModifications(lines);
     for (let [idx, line] of lines.entries()) {
       let { senderName, ts, content } = line;
       parts.push({ senderName, ts, idx, content });
@@ -89,7 +84,6 @@ async function makeDb(jsonDir, outFile) {
   // await db.run('create index "index on ts and sender" on messages (ts, sender)');
 
   console.log('creating fts...');
-  await db.run(`insert into search(rowid, sender, ts, idx, content) select rowid, sender, ts, idx, content from messages`);
   await db.run(`insert into search(search) values ('optimize')`);
 
   console.log('optimizing...');
@@ -111,11 +105,4 @@ async function makeDb(jsonDir, outFile) {
   }
   let lastAddedName = outFile.replace(/\.sqlite3$/, '-last-added.json');
   fs.writeFileSync(lastAddedName, JSON.stringify(lastAddedContents), 'utf8');
-}
-
-function sanitizeRoomName(room) {
-  if (room.startsWith('#')) {
-    room = 'irc-' + room;
-  }
-  return room.replace(/ /g, '_').replace(/#/g, '');
 }

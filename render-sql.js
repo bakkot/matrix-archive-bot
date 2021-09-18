@@ -8,7 +8,7 @@ let { execFileSync } = require('child_process');
 let sqlite3 = require('sqlite3');
 let { open } = require('sqlite');
 
-let { root, historicalRoot, rooms, sanitizeRoomName } = require('./utils.js');
+let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('./utils.js');
 
 (async () => {
   for (let { room, historical } of rooms) {
@@ -35,15 +35,17 @@ let { root, historicalRoot, rooms, sanitizeRoomName } = require('./utils.js');
       let lines = JSON.parse(fs.readFileSync(path.join(jsonDir, file), 'utf8'));
       finalName = file;
       finalLines = lines;
+      lines = applyModifications(lines);
+      let linesAndIdx = [...lines.entries()];
       if (file === last.file) {
         if (last.ids != null) {
           let seen = new Set(last.ids);
-          lines = lines.filter(l => !seen.has(l.id));
+          linesAndIdx = linesAndIdx.filter(l => !seen.has(l[1].id));
         } else {
-          lines = lines.filter(l => l.ts > last.ts);
+          linesAndIdx = linesAndIdx.filter(l => l[1].ts > last.ts);
         }
       }
-      for (let [idx, line] of lines.entries()) {
+      for (let [idx, line] of linesAndIdx) {
         let { senderName, ts, content } = line;
         parts.push({ senderName, ts, idx, content });
       }

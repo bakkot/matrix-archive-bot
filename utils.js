@@ -19,4 +19,25 @@ function sanitizeRoomName(room) {
   return room.replace(/ /g, '_').replace(/#/g, '');
 }
 
-module.exports = { root, historicalRoot, rooms, sanitizeRoomName };
+function isReplace(event) {
+  return event.content?.['m.relates_to']?.rel_type === 'm.replace';
+}
+
+function applyModifications(events) {
+  let replacing = events.map((v, i) => [v, i]).filter(p => isReplace(p[0]));
+  if (replacing.length === 0) {
+    return events;
+  }
+  let clone = [...events];
+  let ids = new Map(events.map((e, i) => [e.id, i]));
+  for (let [replacer, replacerIndex] of replacing) {
+    let targetIndex = ids.get(replacer.content['m.relates_to'].event_id);
+    if (targetIndex != null) {
+      clone[targetIndex].content = replacer.content['m.new_content'];
+      clone[replacerIndex] = null;
+    }
+  }
+  return clone.filter(e => e != null);
+}
+
+module.exports = { root, historicalRoot, rooms, sanitizeRoomName, applyModifications };

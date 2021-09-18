@@ -7,7 +7,7 @@ let crc = require('crc-32');
 let { JSDOM } = require('jsdom');
 let linkify = require('linkifyjs/html');
 
-let { root, historicalRoot, rooms, sanitizeRoomName } = require('./utils.js');
+let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('./utils.js');
 
 const ROOT_SQL_URL = '../_indexes';
 
@@ -77,26 +77,6 @@ if (rooms.length > 0) {
 }
 
 
-function isReplace(event) {
-  return event.content?.['m.relates_to']?.rel_type === 'm.replace';
-}
-
-function applyModifications(events) {
-  let replacing = events.map((v, i) => [v, i]).filter(p => isReplace(p[0]));
-  if (replacing.length === 0) {
-    return events;
-  }
-  let clone = [...events];
-  let ids = new Map(events.map((e, i) => [e.id, i]));
-  for (let [replacer, replacerIndex] of replacing) {
-    let targetIndex = ids.get(replacer.content['m.relates_to'].event_id);
-    if (targetIndex != null) {
-      clone[targetIndex].content = replacer.content['m.new_content'];
-      clone[replacerIndex] = null;
-    }
-  }
-  return clone.filter(e => e != null);
-}
 
 function cpr(inDir, outDir) {
   fs.mkdirSync(outDir, { recursive: true });
