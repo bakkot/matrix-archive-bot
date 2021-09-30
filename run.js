@@ -28,6 +28,10 @@ client.once('sync', (state, prevState, res) => {
 async function onPrepared() {
   for (let room of client.getRooms()) {
     console.log('checking room ' + room.name);
+    if (room.isSpaceRoom()) {
+      console.log('skipping space room');
+      continue;
+    }
     let name = room.name.replace(/\//g, '_');
     let logDir = path.join('logs', 'json', name);
     fs.mkdirSync(logDir, { recursive: true });
