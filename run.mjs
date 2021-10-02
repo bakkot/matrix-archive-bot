@@ -17,7 +17,7 @@ let logDir = path.join(__dirname, 'logs', 'json');
 
 let lastSeenFilename = 'last-seen-event.txt';
 
-let creds = JSON.parse(fs.readFileSync('../matrix-log-bot/credentials.json', 'utf8'));
+let creds = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'credentials.json'), 'utf8'));
 
 function print(obj) {
   console.log(inspect(obj, false, null, true /* enable colors */))
