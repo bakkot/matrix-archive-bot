@@ -165,7 +165,7 @@ function renderRoom(room, current) {
 function renderSidebar(rooms, room, day, prev, next) {
   let header;
   if (room === 'index') {
-    header = `<div class="title">Channel Index</div>`;
+    header = `<div class="title">Channel Index</div><div class="nav"></div>`;
   } else {
     let prevInner = `<span>prev</span>`;
     let nextInner = `<span style="float:right">next</span>`;
@@ -186,15 +186,16 @@ function renderRoomList(rooms, room) {
   let historicalRooms = rooms.filter(r => r.historical).map(r => r.room);
   let activeRooms = rooms.filter(r => !r.historical).map(r => r.room);
 
+  let mainContent;
+
   if (historicalRooms.length === 0) {
-    return `
+    mainContent = `
 <ul class="room-list">
 ${activeRooms.map(r => renderRoom(r, room)).join('\n')}
 </ul>
-<div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
 `;
   } else {
-    return `
+    mainContent = `
 <div class="room-list-wrapper">Active:<br>
 <ul class="room-list">
 ${activeRooms.map(r => renderRoom(r, room)).join('\n')}
@@ -206,9 +207,12 @@ ${activeRooms.map(r => renderRoom(r, room)).join('\n')}
 ${historicalRooms.map(r => renderRoom(r, room)).join('\n')}
 </ul>
 </div>
-<div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
 `;
   }
+  mainContent = `<div class="all-rooms">${mainContent}</div>`;
+  return mainContent + `
+<div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
+`;
 }
 
 function renderEvent(event, index) {

@@ -20,6 +20,11 @@ body {
   text-align: center;
   margin-bottom: .2em;
 }
+.all-rooms {
+  padding-top: 1em;
+  overflow-y: auto;
+  flex-grow: 1;
+}
 .room-list-wrapper {
   color: #777;
 }
@@ -50,8 +55,6 @@ body {
   text-decoration: none;
 }
 .footer {
-  position: absolute;
-  bottom: 0px;
 }
 .nav {
   margin-bottom: .1em;
