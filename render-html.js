@@ -11,6 +11,8 @@ let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = requ
 
 const ROOT_SQL_URL = '../_indexes';
 
+const ROOMLIST_JS_SRC = 'render-roomlist.js';
+
 for (let { room, historical } of rooms) {
   let roomDir = path.join('logs', 'docs', sanitizeRoomName(room));
   fs.mkdirSync(roomDir, { recursive: true });
@@ -72,6 +74,8 @@ if (rooms.length > 0) {
   let index = renderDay(rooms, 'index', '', [], null, null, false);
   fs.writeFileSync(path.join(indexDir, 'index.html'), index, 'utf8');
 
+  fs.writeFileSync(path.join(indexDir, ROOMLIST_JS_SRC), makeRoomJs(rooms), 'utf8');
+
   let resourcesDir = path.join(__dirname, 'resources');
   cpr(resourcesDir, indexDir);
 }
@@ -123,10 +127,15 @@ function renderDay(rooms, room, day, events, prev, next, hasSearch) {
   let cssSrc = isIndex ? 'style.css' : '../style.css';
   let jsSrc = isIndex ? 'logs.js' : '../logs.js';
 
+  let extraJs = isIndex
+    ? ''
+    : `<script>window.room = ${JSON.stringify(room).replace(/</g, '\\x3c')};</script><script src="../${ROOMLIST_JS_SRC}"></script>`;
+
   return `<!doctype html>
 <head>
   <title>${room === 'index' ? 'Matrix Logs' : `${room} on ${day}`}</title>
   <link rel="stylesheet" href="${cssSrc}">
+  ${extraJs}
   <script src="${jsSrc}"></script>
 </head>
 <body><div class="wrapper">
@@ -182,20 +191,27 @@ ${next == null ? nextInner : `<a href="${next}" class="nav-link">${nextInner}</a
 }
 
 function renderRoomList(rooms, room) {
+  let mainContent = room === 'index'
+    ? renderRawRoomList(rooms, room)
+    : `<noscript>JavaScript is required to load the channel index, but you can go to <a href="../..">the static index</a> directly.</noscript>`;
+  return `<div class="all-rooms">${mainContent}</div>
+<div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
+`;
+}
+
+function renderRawRoomList(rooms, room) {
   // someday, partition
   let historicalRooms = rooms.filter(r => r.historical).map(r => r.room);
   let activeRooms = rooms.filter(r => !r.historical).map(r => r.room);
 
-  let mainContent;
-
   if (historicalRooms.length === 0) {
-    mainContent = `
+    return `
 <ul class="room-list">
 ${activeRooms.map(r => renderRoom(r, room)).join('\n')}
 </ul>
 `;
   } else {
-    mainContent = `
+    return `
 <div class="room-list-wrapper">Active:<br>
 <ul class="room-list">
 ${activeRooms.map(r => renderRoom(r, room)).join('\n')}
@@ -209,10 +225,6 @@ ${historicalRooms.map(r => renderRoom(r, room)).join('\n')}
 </div>
 `;
   }
-  mainContent = `<div class="all-rooms">${mainContent}</div>`;
-  return mainContent + `
-<div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
-`;
 }
 
 function renderEvent(event, index) {
@@ -280,7 +292,6 @@ function renderSearch(rooms, room) {
 <div class="sidebar">
 <div class="lhs-header"><div class="lhs-header-contents title">Search ${room}</div></div>
 ${renderRoomList(rooms, room)}
-<div class="footer"><a href="https://github.com/bakkot/matrix-archive-bot">source on github</a></div>
 </div>
 
 <div class="rhs">
@@ -305,4 +316,20 @@ function renderSearchbar(room) {
 </a>
 </div>
 `;
+}
+
+function makeRoomJs(rooms) {
+  return `
+"use strict";
+let rooms = ${JSON.stringify(rooms).replace(/</g, '\\x3c')};
+
+${sanitizeRoomName}
+${renderRoom}
+${renderRawRoomList}
+
+addEventListener('DOMContentLoaded', () => {
+  document.querySelector('.all-rooms').innerHTML = renderRawRoomList(rooms, room);
+});
+`;
+
 }
