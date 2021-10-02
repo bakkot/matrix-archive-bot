@@ -60,6 +60,13 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
 (async () => {
   fs.mkdirSync(logDir, { recursive: true });
 
+  let config = {};
+  let configPath = path.join(logDir, '..', 'config.json');
+  if (fs.existsSync(configPath)) {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  }
+  let excluded = new Set(config.excluded ?? []);
+
   // https://matrix.org/docs/spec/client_server/latest#get-matrix-client-r0-joined-rooms
   let { joined_rooms } = await api('joined_rooms');
 
@@ -72,7 +79,7 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
     let thisBatch = toInspect;
     toInspect = [];
     await Promise.all(thisBatch.map(async roomId => {
-      if (seen.has(roomId)) {
+      if (excluded.has(roomId) || seen.has(roomId)) {
         return;
       }
       seen.add(roomId);
@@ -119,6 +126,7 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
       });
     }));
   }
+
 
   // update logs for all rooms
   // massive parallelism here is fine because `api()` is self-limiting
