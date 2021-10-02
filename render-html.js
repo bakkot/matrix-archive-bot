@@ -213,6 +213,10 @@ ${historicalRooms.map(r => renderRoom(r, room)).join('\n')}
 
 function renderEvent(event, index) {
   let { msgtype } = event.content;
+  if (msgtype == null) {
+    // message was deleted
+    return '';
+  }
   if (msgtype !== 'm.text' && msgtype !== 'm.emote') {
     throw new Error('unknown event message type ' + msgtype);
   }

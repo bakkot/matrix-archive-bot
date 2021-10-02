@@ -9,6 +9,7 @@ let sqlite3 = require('sqlite3');
 let { open } = require('sqlite');
 
 let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('./utils.js');
+let { makeDb } = require('./scripts/make-dbs.js');
 
 (async () => {
   for (let { room, historical } of rooms) {
@@ -17,7 +18,7 @@ let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = requ
     let dbFile = path.join(__dirname, 'sql', sanitized + '.sqlite3');
     let lastAddedFile = path.join(__dirname, 'sql', sanitized + '-last-added.json');
     if (!fs.existsSync(dbFile)) {
-      continue;
+      await makeDb(jsonDir, dbFile);
     }
     if (!fs.existsSync(lastAddedFile)) {
       throw new Error(`expected to find ${lastAddedFile}`);
@@ -25,7 +26,7 @@ let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = requ
 
     let indexDir = path.join(__dirname, 'logs', 'docs', '_indexes', sanitized);
 
-    // // add everything more recent than the last-added item
+    // add everything more recent than the last-added item
     let last = JSON.parse(fs.readFileSync(lastAddedFile, 'utf8'));
     let toAdd = fs.readdirSync(jsonDir).sort().filter(f => f.endsWith('.json') && f >= last.file);
     let parts = [];
@@ -47,6 +48,10 @@ let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = requ
       }
       for (let [idx, line] of linesAndIdx) {
         let { senderName, ts, content } = line;
+        if (content.msgtype == null) {
+          // message was deleted
+          continue;
+        }
         parts.push({ senderName, ts, idx, content });
       }
     }
@@ -61,7 +66,7 @@ let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = requ
     // unfortunately I don't know how many that is
     let statement = `insert into search values ${parts.map((v, i) => `($sender${i}, $ts${i}, $idx${i}, $content${i})`).join(', ')}`;
     let vals = Object.fromEntries(
-      parts.flatMap(({ senderName, ts, idx, content}, i) => [
+      parts.flatMap(({ senderName, ts, idx, content }, i) => [
         [`$sender${i}`, senderName],
         [`$ts${i}`, ts],
         [`$idx${i}`, idx],

@@ -11,6 +11,8 @@ body {
 }
 .sidebar {
   flex: 0 0 165px;
+  display: flex;
+  flex-direction: column;
   border-right: 1px solid #444;
   padding-right: 10px;
 }
@@ -43,6 +45,7 @@ body {
 }
 .current-room {
   padding-left: .5em;
+  display: inline-block;
   color: black !important;
   text-decoration: none;
 }
@@ -51,7 +54,7 @@ body {
   bottom: 0px;
 }
 .nav {
-  margin-bottom: 2em;
+  margin-bottom: .1em;
   border-bottom: 1px solid #444;
   padding-bottom: .1em;
 }

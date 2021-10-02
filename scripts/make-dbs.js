@@ -1,8 +1,9 @@
 'use strict';
 
-// you should only need to run this once
-// once the databases are collected, running render-sql.js will keep them up to date
-// after running this, create the initial splits by running
+// you do not need to run this manually
+// render-sql.js will do it for you
+// but if you have an extensive new log to index, or many logs,
+// you may wish to run this yourself
 
 let fs = require('fs');
 let path = require('path');
@@ -13,20 +14,22 @@ let { open } = require('sqlite');
 
 let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('../utils.js');
 
-(async () => {
-  for (let { room, historical } of rooms) {
-    console.log(`Making DB for ${room}`);
-    let jsonDir = path.join(historical ? historicalRoot : root, room);
-    let sanitized = sanitizeRoomName(room);
-    let dbFile = path.join(__dirname, '..', 'sql', sanitized + '.sqlite3');
-    await makeDb(jsonDir, dbFile);
-    execFileSync(path.join(__dirname, 'split-db.sh'), [dbFile, path.join(__dirname, '..', 'logs', 'docs', '_indexes', sanitized)]);
-  }
-})().catch(e => {
-  console.error(e);
-  process.exit(1);
-});
 
+if (require.main === module) {
+  (async () => {
+    for (let { room, historical } of rooms) {
+      console.log(`Making DB for ${room}`);
+      let jsonDir = path.join(historical ? historicalRoot : root, room);
+      let sanitized = sanitizeRoomName(room);
+      let dbFile = path.join(__dirname, '..', 'sql', sanitized + '.sqlite3');
+      await makeDb(jsonDir, dbFile);
+      execFileSync(path.join(__dirname, 'split-db.sh'), [dbFile, path.join(__dirname, '..', 'logs', 'docs', '_indexes', sanitized)]);
+    }
+  })().catch(e => {
+    console.error(e);
+    process.exit(1);
+  });
+}
 
 async function makeDb(jsonDir, outFile) {
   if (fs.existsSync(outFile)) {
@@ -106,3 +109,5 @@ async function makeDb(jsonDir, outFile) {
   let lastAddedName = outFile.replace(/\.sqlite3$/, '-last-added.json');
   fs.writeFileSync(lastAddedName, JSON.stringify(lastAddedContents), 'utf8');
 }
+
+module.exports = { makeDb };

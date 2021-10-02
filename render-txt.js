@@ -37,6 +37,10 @@ for (let { room, historical } of rooms) {
       let events = JSON.parse(fs.readFileSync(path.join(roomJsonDir, day + '.json'), 'utf8'));
       for (let event of events) {
         let { msgtype } = event.content;
+        if (msgtype == null) {
+          // message was deleted
+          continue;
+        }
         if (msgtype !== 'm.text' && msgtype !== 'm.emote') {
           throw new Error('unknown event message type ' + msgtype);
         }

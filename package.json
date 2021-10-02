@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "build-search-script": "rm -rf resources/search && webpack --mode=production",
-    "collect": "node run.js",
+    "collect": "node run.mjs",
     "render": "node render-txt.js && node render-sql.js && node render-html.js"
   },
   "dependencies": {
@@ -10,7 +10,7 @@
     "http-server": "^13.0.2",
     "jsdom": "^16.6.0",
     "linkifyjs": "^3.0.0-beta.3",
-    "matrix-js-sdk": "^13.0.0",
+    "node-fetch": "^3.0.0",
     "sql.js-httpvfs": "./sql.js-httpvfs-0.8.11.tgz",
     "sqlite": "^4.0.23",
     "sqlite3": "^5.0.2",
