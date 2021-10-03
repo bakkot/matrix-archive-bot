@@ -22,7 +22,9 @@ Create a file in this directory named `credentials.json` which has JSON with you
 
 ## Regenerating rendered HTML
 
-`render-html` will mostly avoid regenerating old pages. If you add or remove a room, however, you'll need to regenerate everything to update the indices. That's just a matter of doing `rm -rf logs/docs && node render-html.js` and waiting a little longer than usual.
+`render` will mostly avoid regenerating old pages. If for some reason you want to forcibly regenerate the HTML, you can do `rm -rf logs/docs && node render-html.js`.
+
+The list of rooms is loaded from a dynamically generated script, rather than being hardcoded into pages, so there's no need to regenerate just because you've added a new room.
 
 ## Search
 
