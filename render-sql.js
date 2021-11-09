@@ -20,6 +20,10 @@ let { makeDb } = require('./scripts/make-dbs.js');
     if (!fs.existsSync(dbFile)) {
       await makeDb(jsonDir, dbFile);
     }
+    if (!fs.existsSync(dbFile)) {
+      // db not created by prevous step; e.g. no one has talked yet
+      continue;
+    }
     if (!fs.existsSync(lastAddedFile)) {
       throw new Error(`expected to find ${lastAddedFile}`);
     }
