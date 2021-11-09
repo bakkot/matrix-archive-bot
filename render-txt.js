@@ -14,6 +14,10 @@ for (let { room, historical } of rooms) {
     .filter(f => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(f))
     .map(d => d.replace(/\.json$/, ''))
     .sort();
+  
+  if (days.length === 0) {
+    continue;
+  }
 
   // gotta get `groupBy` added... https://github.com/tc39/proposal-array-filtering/issues/2#issuecomment-810594446
   let months = new Map();
