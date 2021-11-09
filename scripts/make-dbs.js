@@ -36,6 +36,10 @@ async function makeDb(jsonDir, outFile) {
     console.log('db exists; rm it if you want to recreate it');
     return;
   }
+  let files = fs.readdirSync(jsonDir).filter(f => f.endsWith('.json'));
+  if (files.length === 0) {
+    return;
+  }
 
   const db = await open({
     filename: outFile,
@@ -51,10 +55,7 @@ async function makeDb(jsonDir, outFile) {
 
   let finalName = null;
   let finalLines = null;
-  for (let file of fs.readdirSync(jsonDir)) {
-    if (!file.endsWith('.json')) {
-      continue;
-    }
+  for (let file of files) {
     finalName = file;
     console.log('reading ' + file);
     let parts = [];
