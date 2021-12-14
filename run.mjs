@@ -159,15 +159,17 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
     let contextLimit = lastSeenId === historyEventId ? 0 : 10;
 
     // we just need the context to get a pagination token
+    // but since we're doing a query anyway, might as well check for new messages while we're at it
     // https://matrix.org/docs/spec/client_server/latest#get-matrix-client-r0-rooms-roomid-context-eventid
     let context = await api(`rooms/${roomId}/context/${lastSeenId}?limit=${contextLimit}&filter=${MESSAGE_AND_MEMBER_FILTER}`);
 
     let lastPaginationToken = context.start;
     let nextPaginationToken = context.end;
+    let latestEventId = context.event.event_id;
 
     let nameMap = null;
     let messages = [];
-    let latestEventId = context.event.event_id;
+
     async function addEvents(events) {
       for (let [index, event] of events.entries()) {
         // TODO save reactions etc also
@@ -217,12 +219,28 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
       }
     }
 
+
     if (context.events_after.some(e => e.type === 'm.room.message')) {
       // the token we have requires us to reconcile with events_before and the context event
       // so we can't rely on the logic in addEvents to handle this for us
-      nameMap = await getMembers(roomId, context.start);
-      // events_before is reverse chronological
-      resolveMemberEvents([...context.events_before.reverse(), context.event]);
+      try {
+        nameMap = await getMembers(roomId, context.start);
+        // events_before is reverse chronological
+        resolveMemberEvents([...context.events_before.reverse(), context.event]);
+      } catch (e) {
+        if (!e.message.includes('failed to get members')) {
+          throw e;
+        }
+        // if we failed to get members, it's probably because our `lastSeenId` was within `contextLimit` events of the history event, so the context's start token is before we are allowed to query
+        // (unfortunately there's no good way to know that without just trying it, as far as I can tell)
+        // we were only fetching nonzero events as an optimization
+        // so try again with limit = 0
+        context = await api(`rooms/${roomId}/context/${lastSeenId}?limit=0&filter=${MESSAGE_AND_MEMBER_FILTER}`);
+        lastPaginationToken = context.start;
+        nextPaginationToken = context.end;
+        latestEventId = context.event.event_id;
+        nameMap = await getMembers(roomId, context.start);
+      }
     }
     await addEvents(context.events_after);
 
