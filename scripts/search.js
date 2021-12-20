@@ -33,6 +33,7 @@ async function load(configUrl) {
   let loadMore = document.getElementById('load-more');
   let thinking = document.getElementById('thinking');
   let errorOut = document.getElementById('error');
+  let sort = document.getElementById('sort-order');
   let output = document.getElementById('search-output');
 
   function more(isMore) {
@@ -55,6 +56,12 @@ async function load(configUrl) {
     }
   });
 
+  if (localStorage.getItem('sort-order') === 'newest') {
+    // default for the element and therefore for this code is "oldest".
+    sort.value = 'newest';
+  }
+  let lastSort = sort.value;
+
   function startSearch() {
     search(query.value, 0);
   }
@@ -70,6 +77,12 @@ async function load(configUrl) {
         throw new Error('must be at least 3 characters');
       }
 
+      if (sort.value !== lastSort) {
+        offset = 0;
+        localStorage.setItem('sort-order', sort.value);
+        lastSort = sort.value;
+      }
+
       if (offset === 0) {
         output.innerHTML = '';
         previousSearch = query;
@@ -83,7 +96,7 @@ async function load(configUrl) {
       more(false);
 
       // we fetch an extra so we can tell if we're done
-      let cmd = `select * from search where search match '${escapeForSql(query)}' limit ${perPage + 1} offset ${offset}`;
+      let cmd = `select * from search where search match '${escapeForSql(query)}' order by rowid ${sort.value === 'newest' ? 'desc' : ''} limit ${perPage + 1} offset ${offset}`;
 
       worker.worker.bytesRead = 0;
       let page = await worker.db.query(cmd);
