@@ -125,20 +125,22 @@ function postprocessHTML(html) {
   return result;
 }
 
+function renderRoomlistJS(room) {
+  return room === 'index'
+    ? ''
+    : `<script>window.room = ${JSON.stringify(room).replace(/</g, '\\x3c')};</script><script src="../${ROOMLIST_JS_SRC}"></script>`;
+}
+
 function renderDay(rooms, room, day, events, prev, next, hasSearch) {
   let isIndex = room === 'index';
   let cssSrc = isIndex ? 'style.css' : '../style.css';
   let jsSrc = isIndex ? 'logs.js' : '../logs.js';
 
-  let extraJs = isIndex
-    ? ''
-    : `<script>window.room = ${JSON.stringify(room).replace(/</g, '\\x3c')};</script><script src="../${ROOMLIST_JS_SRC}"></script>`;
-
   return `<!doctype html>
 <head>
   <title>${room === 'index' ? 'Matrix Logs' : `${room} on ${day}`}</title>
   <link rel="stylesheet" href="${cssSrc}">
-  ${extraJs}
+  ${renderRoomlistJS(room)}
   <script src="${jsSrc}"></script>
 </head>
 <body><div class="wrapper">
@@ -286,6 +288,7 @@ function renderSearch(rooms, room) {
 
 <link rel="stylesheet" href="../style.css">
 <script src="../search-js/search.js"></script>
+${renderRoomlistJS(room)}
 <script>initSearch(new URL('${ROOT_SQL_URL}/${sanitizeRoomName(room)}/config.json', location))</script>
 </head>
 <body>
@@ -312,7 +315,7 @@ ${renderSearchbar(room, true)}
 function renderSearchbar(room, isActualPage) {
   return `<div class="rhs-header">
 <span id="error" style="color: red; display:none">error</span>
-${isActualPage ? `<select id="sort-order" style="display:none">
+${isActualPage ? `<select id="sort-order">
   <option value="oldest">Oldest first</option>
   <option value="newest">Newest first</option>
 </select>` : ''}
