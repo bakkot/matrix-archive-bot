@@ -10,21 +10,6 @@ const workerUrl = new URL(
 const wasmUrl = new URL('sql.js-httpvfs/dist/sql-wasm.wasm', import.meta.url);
 
 async function load(configUrl) {
-  const worker = await createDbWorker(
-    [
-      {
-        // it's kind of a shame to add this network request instead of inlining
-        // but we're about to do many many requests anyway, so whatever
-        from: 'jsonconfig',
-        configUrl: configUrl + '?cb=' + Math.floor(Math.random() * 1e15).toString(32),
-      },
-    ],
-    workerUrl.toString(),
-    wasmUrl.toString(),
-    1024 * 512,
-  );
-  window.sqlWorker = worker;
-
   let perPage = 30;
   let previousSearch = '';
   let nextOffset = 0;
@@ -43,12 +28,6 @@ async function load(configUrl) {
       loadMore.style.display = 'none';
     }
   }
-
-  document.getElementById('search-submit').addEventListener('click', startSearch);
-
-  document.getElementById('load-more').addEventListener('click', () => {
-    search(previousSearch, nextOffset);
-  });
 
   query.addEventListener('keyup', e => {
     if (e.keyCode === 13) {
@@ -133,6 +112,27 @@ async function load(configUrl) {
       more(isMore);
     }
   }
+
+  const worker = await createDbWorker(
+    [
+      {
+        // it's kind of a shame to add this network request instead of inlining
+        // but we're about to do many many requests anyway, so whatever
+        from: 'jsonconfig',
+        configUrl: configUrl + '?cb=' + Math.floor(Math.random() * 1e15).toString(32),
+      },
+    ],
+    workerUrl.toString(),
+    wasmUrl.toString(),
+    1024 * 512,
+  );
+  window.sqlWorker = worker;
+
+  document.getElementById('search-submit').addEventListener('click', startSearch);
+
+  document.getElementById('load-more').addEventListener('click', () => {
+    search(previousSearch, nextOffset);
+  });
 
   let fromUrl = new URLSearchParams(location.search).get('q');
   if (fromUrl != null) {
