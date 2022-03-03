@@ -57,7 +57,7 @@ for (let { room, historical } of rooms) {
   }
 
   if (days.length === 0) {
-    return;
+    continue;
   }
   let index = `<!doctype html>
 <meta http-equiv="refresh" content="0; URL='${days[0]}'" />
