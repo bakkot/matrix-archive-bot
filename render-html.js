@@ -13,9 +13,7 @@ const ROOT_SQL_URL = '../_indexes';
 
 const ROOMLIST_JS_SRC = 'render-roomlist.js';
 
-for (let { room, historical } of rooms) {
-  let roomDir = path.join('logs', 'docs', sanitizeRoomName(room));
-  fs.mkdirSync(roomDir, { recursive: true });
+let roomsWithDays = rooms.map(({ room, historical }) => {
   let roomJsonDir = path.join(historical ? historicalRoot : root, room);
   let days = fs
     .readdirSync(roomJsonDir)
@@ -23,6 +21,13 @@ for (let { room, historical } of rooms) {
     .map((d) => d.replace(/\.json$/, ''))
     .sort()
     .reverse();
+  return { room, historical, days };
+}).filter(x => x.days.length > 0);
+
+for (let { room, historical, days } of roomsWithDays) {
+  let roomDir = path.join('logs', 'docs', sanitizeRoomName(room));
+  fs.mkdirSync(roomDir, { recursive: true });
+  let roomJsonDir = path.join(historical ? historicalRoot : root, room);
   let alreadyDoneHtml = fs
     .readdirSync(roomDir)
     .filter((f) => /^[0-9]{4}-[0-9]{2}-[0-9]{2}\.html$/.test(f))
@@ -48,7 +53,7 @@ for (let { room, historical } of rooms) {
     let prev = i < days.length - 1 ? days[i + 1] : null;
     let next = i > 0 ? days[i - 1] : null;
     events = applyModifications(events);
-    let rendered = renderDay(rooms, room, day, events, prev, next, hasSearch);
+    let rendered = renderDay(roomsWithDays, room, day, events, prev, next, hasSearch);
     if (!room.startsWith('#')) {
       // don't postprocess IRC logs
       rendered = postprocessHTML(rendered);
@@ -65,16 +70,16 @@ for (let { room, historical } of rooms) {
   fs.writeFileSync(path.join(roomDir, 'index.html'), index, 'utf8');
 
   // TODO gate this on the SQL existing
-  fs.writeFileSync(path.join(roomDir, 'search.html'), renderSearch(rooms, room), 'utf8');
+  fs.writeFileSync(path.join(roomDir, 'search.html'), renderSearch(roomsWithDays, room), 'utf8');
 }
 
-if (rooms.length > 0) {
+if (roomsWithDays.length > 0) {
   let indexDir = path.join('logs', 'docs');
   fs.mkdirSync(indexDir, { recursive: true });
-  let index = renderDay(rooms, 'index', '', [], null, null, false);
+  let index = renderDay(roomsWithDays, 'index', '', [], null, null, false);
   fs.writeFileSync(path.join(indexDir, 'index.html'), index, 'utf8');
 
-  fs.writeFileSync(path.join(indexDir, ROOMLIST_JS_SRC), makeRoomJs(rooms), 'utf8');
+  fs.writeFileSync(path.join(indexDir, ROOMLIST_JS_SRC), makeRoomJs(roomsWithDays), 'utf8');
 
   let resourcesDir = path.join(__dirname, 'resources');
   cpr(resourcesDir, indexDir);
@@ -328,6 +333,7 @@ ${isActualPage ? `<select id="sort-order">
 }
 
 function makeRoomJs(rooms) {
+  rooms = rooms.map(x => ({ historical: x.historical, room: x.room }));
   return `
 "use strict";
 let rooms = ${JSON.stringify(rooms).replace(/</g, '\\x3c')};
