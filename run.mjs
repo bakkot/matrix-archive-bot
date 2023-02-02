@@ -177,7 +177,7 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
           let content = event.content;
           if (content.msgtype === 'm.text' || content.msgtype === 'm.emote') {
             if (nameMap == null) {
-              nameMap = await getMembers(roomId, lastPaginationToken);
+              nameMap = await getMembers(roomId, name, lastPaginationToken) ?? new Map;
               resolveMemberEvents(events.slice(0, index));
             }
             messages.push({
@@ -224,7 +224,7 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
       // the token we have requires us to reconcile with events_before and the context event
       // so we can't rely on the logic in addEvents to handle this for us
       try {
-        nameMap = await getMembers(roomId, context.start);
+        nameMap = await getMembers(roomId, name, context.start) ?? nameMap;
         // events_before is reverse chronological
         resolveMemberEvents([...context.events_before.reverse(), context.event]);
       } catch (e) {
@@ -239,7 +239,7 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
         lastPaginationToken = context.start;
         nextPaginationToken = context.end;
         latestEventId = context.event.event_id;
-        nameMap = await getMembers(roomId, context.start);
+        nameMap = await getMembers(roomId, name, context.start) ?? nameMap;
       }
     }
     await addEvents(context.events_after);
@@ -284,11 +284,12 @@ function memberMessageToDisplayname(m) {
   return m.content?.displayname ?? guessName(m.state_key);
 }
 
-async function getMembers(roomId, at) {
+async function getMembers(roomId, room, at) {
   // https://matrix.org/docs/spec/client_server/latest#get-matrix-client-r0-rooms-roomid-members
   let res = await api(`rooms/${roomId}/members?membership=join&at=${at}`);
   if (res.errcode) {
-    throw new Error(`failed to get members: ${JSON.stringify(res)}`)
+    console.error(new Error(`failed to get members for room ${room}: ${JSON.stringify(res)}`));
+    return null;
   }
   return new Map(res.chunk.map(m => [m.state_key, memberMessageToDisplayname(m)]));
 }
