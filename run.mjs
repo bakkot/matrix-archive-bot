@@ -47,6 +47,7 @@ async function api(path) {
       headers: {
         'Authorization': `Bearer ${creds.accessToken}`,
       },
+      signal: AbortSignal.timeout(30_000),
     })).json();
   } finally {
     unlock();
