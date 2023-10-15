@@ -10,8 +10,6 @@ import { inspect } from 'util';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import fetch from 'node-fetch';
-
 let __dirname = path.dirname(fileURLToPath(import.meta.url));
 let logDir = path.join(__dirname, 'logs', 'json');
 

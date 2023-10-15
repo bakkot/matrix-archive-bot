@@ -5,8 +5,7 @@ let fs = require('fs');
 let path = require('path');
 let { execFileSync } = require('child_process');
 
-let sqlite3 = require('sqlite3');
-let { open } = require('sqlite');
+let sqlite = require('better-sqlite3');
 
 let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('./utils.js');
 let { makeDb } = require('./scripts/make-dbs.js');
@@ -71,19 +70,16 @@ let { makeDb } = require('./scripts/make-dbs.js');
     let statement = `insert into search values ${parts.map((v, i) => `($sender${i}, $ts${i}, $idx${i}, $content${i})`).join(', ')}`;
     let vals = Object.fromEntries(
       parts.flatMap(({ senderName, ts, idx, content }, i) => [
-        [`$sender${i}`, senderName],
-        [`$ts${i}`, ts],
-        [`$idx${i}`, idx],
-        [`$content${i}`, content.body],
+        [`sender${i}`, senderName],
+        [`ts${i}`, ts],
+        [`idx${i}`, idx],
+        [`content${i}`, content.body],
       ])
     );
 
-    const db = await open({
-      filename: dbFile,
-      driver: sqlite3.Database,
-    });
-    await db.run(statement, vals);
-    await db.close();
+    const db = sqlite(dbFile);
+    db.prepare(statement).run(vals);
+    db.close();
 
     execFileSync(path.join(__dirname, 'scripts', 'split-db.sh'), [dbFile, indexDir]);
 

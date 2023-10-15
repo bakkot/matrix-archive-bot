@@ -9,8 +9,7 @@ let fs = require('fs');
 let path = require('path');
 let { execFileSync } = require('child_process');
 
-let sqlite3 = require('sqlite3');
-let { open } = require('sqlite');
+let sqlite = require('better-sqlite3');
 
 let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('../utils.js');
 
@@ -41,17 +40,14 @@ async function makeDb(jsonDir, outFile) {
     return;
   }
 
-  const db = await open({
-    filename: outFile,
-    driver: sqlite3.Database,
-  });
+  const db = await sqlite(outFile);
 
-  await db.run(`
+  await db.prepare(`
     create virtual table search using fts5(
       sender, ts UNINDEXED, idx UNINDEXED, content,
       prefix=3
     );
-  `);
+  `).run();
 
   let finalName = null;
   let finalLines = null;
@@ -72,13 +68,13 @@ async function makeDb(jsonDir, outFile) {
     let statement = `insert into search values ${parts.map((v, i) => `($sender${i}, $ts${i}, $idx${i}, $content${i})`).join(', ')}`;
     let vals = Object.fromEntries(
       parts.flatMap(({ senderName, ts, idx, content}, i) => [
-        [`$sender${i}`, senderName],
-        [`$ts${i}`, ts],
-        [`$idx${i}`, idx],
-        [`$content${i}`, content.body],
+        [`sender${i}`, senderName],
+        [`ts${i}`, ts],
+        [`idx${i}`, idx],
+        [`content${i}`, content.body],
       ])
     );
-    await db.run(statement, vals);
+    db.prepare(statement).run(vals);
   }
 
   // console.log('creating indexes...');
@@ -88,14 +84,14 @@ async function makeDb(jsonDir, outFile) {
   // await db.run('create index "index on ts and sender" on messages (ts, sender)');
 
   console.log('creating fts...');
-  await db.run(`insert into search(search) values ('optimize')`);
+  db.prepare(`insert into search(search) values ('optimize')`).run();
 
   console.log('optimizing...');
-  await db.run(`pragma page_size = 2048`);
-  await db.run(`vacuum`);
-  await db.run(`analyze`);
+  db.prepare(`pragma page_size = 2048`).run();
+  db.prepare(`vacuum`).run();
+  db.prepare(`analyze`).run();
 
-  await db.close();
+  db.close();
 
   console.log('noting last entry...');
   let lastAddedContents = { file: finalName };
