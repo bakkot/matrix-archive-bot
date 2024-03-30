@@ -287,8 +287,9 @@ async function getMembers(roomId, room, at) {
   // https://matrix.org/docs/spec/client_server/latest#get-matrix-client-r0-rooms-roomid-members
   let res = await api(`rooms/${roomId}/members?membership=join&at=${at}`);
   if (res.errcode) {
-    console.error(new Error(`failed to get members for room ${room}: ${JSON.stringify(res)}`));
-    return null;
+    throw new Error(`failed to get members for room ${room}: ${JSON.stringify(res)}`);
+    // console.error(new Error(`failed to get members for room ${room}: ${JSON.stringify(res)}`));
+    // return null;
   }
   return new Map(res.chunk.map(m => [m.state_key, memberMessageToDisplayname(m)]));
 }
