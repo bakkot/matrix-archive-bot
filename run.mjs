@@ -238,7 +238,17 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
         lastPaginationToken = context.start;
         nextPaginationToken = context.end;
         latestEventId = context.event.event_id;
-        nameMap = await getMembers(roomId, name, context.start) ?? nameMap;
+        try {
+          nameMap = await getMembers(roomId, name, context.start) ?? nameMap;
+        } catch (e) {
+          if (!e.message.includes('failed to get members')) {
+            throw e;
+          }
+          // if we have the very bad luck to have caputured as the lastSeenId the _very first_ world-visible event
+          // then because the "start" token points to the point in time before it, we may not be allowed to read it
+          // so try the "end" one instead
+          nameMap = await getMembers(roomId, name, context.end) ?? nameMap;
+        }
       }
     }
     await addEvents(context.events_after);
