@@ -137,11 +137,23 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
     let lastSeenFile = path.join(roomDir, lastSeenFilename);
     let lastSeenId = historyEventId;
 
+    let context;
     let hasOldId = fs.existsSync(lastSeenFile);
     if (hasOldId) {
       lastSeenId = fs.readFileSync(lastSeenFile, 'utf8').trim();
-      console.log('loaded old lastSeenId', lastSeenId);
-    } else {
+
+      context = await api(`rooms/${roomId}/context/${lastSeenId}?limit=${10}&filter=${MESSAGE_AND_MEMBER_FILTER}`);
+      if (context.errcode) {
+        console.log(`stored lastSeenId ${name} failed with ${context.errcode} (${context.error}); falling back to loading from disk`);
+        context = null;
+        hasOldId = false;
+        lastSeenId = historyEventId;
+      } else {
+        console.log('loaded old lastSeenId', lastSeenId);
+      }
+    }
+
+    if (!hasOldId) {
       // fall back to checking logs
       let logFiles = fs.readdirSync(roomDir).filter(f => f.match(/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json/));
       for (let file of logFiles.sort().reverse()) {
@@ -153,14 +165,21 @@ const MESSAGE_AND_MEMBER_FILTER = `{"types":["m.room.message","m.room.member"],"
         }
       }
     }
-    // we want the start token for the history event to point to the event, not to an earlier point
-    // so that we are allowed to fetch membership for that token
-    let contextLimit = lastSeenId === historyEventId ? 0 : 10;
 
-    // we just need the context to get a pagination token
-    // but since we're doing a query anyway, might as well check for new messages while we're at it
-    // https://matrix.org/docs/spec/client_server/latest#get-matrix-client-r0-rooms-roomid-context-eventid
-    let context = await api(`rooms/${roomId}/context/${lastSeenId}?limit=${contextLimit}&filter=${MESSAGE_AND_MEMBER_FILTER}`);
+    if (context == null) {
+      // we want the start token for the history event to point to the event, not to an earlier point
+      // so that we are allowed to fetch membership for that token
+      let contextLimit = lastSeenId === historyEventId ? 0 : 10;
+
+      // we just need the context to get a pagination token
+      // but since we're doing a query anyway, might as well check for new messages while we're at it
+      // https://matrix.org/docs/spec/client_server/latest#get-matrix-client-r0-rooms-roomid-context-eventid
+      context = await api(`rooms/${roomId}/context/${lastSeenId}?limit=${contextLimit}&filter=${MESSAGE_AND_MEMBER_FILTER}`);
+      if (context.errcode) {
+        console.log(context);
+        throw new Error(`could not fetch history for ${name}, errcode: ${context.errcode} (${context.error})`);
+      }
+    }
 
     let lastPaginationToken = context.start;
     let nextPaginationToken = context.end;
