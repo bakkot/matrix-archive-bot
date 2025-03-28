@@ -6,7 +6,7 @@
     "render": "node render-txt.js && node render-sql.js && node render-html.js"
   },
   "dependencies": {
-    "better-sqlite3": "^9.0.0",
+    "better-sqlite3": "^11.9.1",
     "crc-32": "^1.2.0",
     "http-server": "^13.0.2",
     "jsdom": "^16.6.0",
