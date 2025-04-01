@@ -143,6 +143,7 @@ function renderDay(rooms, room, day, events, prev, next, hasSearch) {
 
   return `<!doctype html>
 <head>
+  <meta charset="UTF-8">
   <title>${room === 'index' ? 'Matrix Logs' : `${room} on ${day}`}</title>
   <link rel="stylesheet" href="${cssSrc}">
   ${renderRoomlistJS(room)}
@@ -288,7 +289,7 @@ function escapeForHtml(str) {
 
 function renderSearch(rooms, room) {
   return `<!doctype html>
-
+<meta charset="UTF-8">
 <title>Search ${room}</title>
 
 <link rel="stylesheet" href="../style.css">
