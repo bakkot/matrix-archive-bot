@@ -5,7 +5,7 @@ let fs = require('fs');
 let path = require('path');
 let { execFileSync } = require('child_process');
 
-let sqlite = require('better-sqlite3');
+let { DatabaseSync } = require('node:sqlite');
 
 let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('./utils.js');
 let { makeDb } = require('./scripts/make-dbs.js');
@@ -70,14 +70,14 @@ let { makeDb } = require('./scripts/make-dbs.js');
     let statement = `insert into search values ${parts.map((v, i) => `($sender${i}, $ts${i}, $idx${i}, $content${i})`).join(', ')}`;
     let vals = Object.fromEntries(
       parts.flatMap(({ senderName, ts, idx, content }, i) => [
-        [`sender${i}`, senderName],
-        [`ts${i}`, ts],
-        [`idx${i}`, idx],
-        [`content${i}`, content.body],
+        [`$sender${i}`, senderName],
+        [`$ts${i}`, ts],
+        [`$idx${i}`, idx],
+        [`$content${i}`, content.body],
       ])
     );
 
-    const db = sqlite(dbFile);
+    const db = new DatabaseSync(dbFile);
     db.prepare(statement).run(vals);
     db.close();
 

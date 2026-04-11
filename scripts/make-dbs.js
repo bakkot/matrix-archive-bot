@@ -9,7 +9,7 @@ let fs = require('fs');
 let path = require('path');
 let { execFileSync } = require('child_process');
 
-let sqlite = require('better-sqlite3');
+let { DatabaseSync } = require('node:sqlite');
 
 let { root, historicalRoot, rooms, sanitizeRoomName, applyModifications } = require('../utils.js');
 
@@ -40,9 +40,9 @@ async function makeDb(jsonDir, outFile) {
     return;
   }
 
-  const db = await sqlite(outFile);
+  const db = new DatabaseSync(outFile);
 
-  await db.prepare(`
+  db.prepare(`
     create virtual table search using fts5(
       sender, ts UNINDEXED, idx UNINDEXED, content,
       prefix=3
@@ -68,10 +68,10 @@ async function makeDb(jsonDir, outFile) {
     let statement = `insert into search values ${parts.map((v, i) => `($sender${i}, $ts${i}, $idx${i}, $content${i})`).join(', ')}`;
     let vals = Object.fromEntries(
       parts.flatMap(({ senderName, ts, idx, content}, i) => [
-        [`sender${i}`, senderName],
-        [`ts${i}`, ts],
-        [`idx${i}`, idx],
-        [`content${i}`, content.body],
+        [`$sender${i}`, senderName],
+        [`$ts${i}`, ts],
+        [`$idx${i}`, idx],
+        [`$content${i}`, content.body],
       ])
     );
     db.prepare(statement).run(vals);
